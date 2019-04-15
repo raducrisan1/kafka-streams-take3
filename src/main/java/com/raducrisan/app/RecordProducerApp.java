@@ -18,7 +18,7 @@ import io.confluent.kafka.serializers.KafkaAvroSerializer;
 public class RecordProducerApp {
 
     private static Producer<Key, Phrase> _producer;
-    private static Logger _logger = LoggerFactory.getLogger(RecordConsumerApp.class);
+    private static Logger _logger = LoggerFactory.getLogger(RecordProducerApp.class);
     private static Thread _mainThread = Thread.currentThread();
     private static Object _sync = new Object();
     private static boolean _exitNow = false;
@@ -27,20 +27,19 @@ public class RecordProducerApp {
         initialize();
         setupShutdownHandler();
 
-        while (true) {
-            for (int i = 0; i < 10; i++) {
-                addRecord(new Date().getTime(), "This IS a LIST of CAPITAL case WORDS");
-            }
-            _producer.flush();
-            synchronized (_sync) {
-                if (_exitNow)
-                    break;
-            }
-            try {
+        try {
+            while (true) {
+                for (int i = 0; i < 10; i++) {
+                    addRecord(new Date().getTime(), "This IS a LIST of CAPITAL case WORDS");
+                }
+                _producer.flush();
+                synchronized (_sync) {
+                    if (_exitNow)
+                        break;
+                }
                 Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                break;
             }
+        } catch (InterruptedException e) {
         }
         System.out.println("Done.");
     }
@@ -57,7 +56,7 @@ public class RecordProducerApp {
         _producer = new KafkaProducer<Key, Phrase>(props);
     }
 
-    private static void addRecord(Long key, String content) {
+    private static void addRecord(Long key, String content) throws InterruptedException {
         ProducerRecord<Key, Phrase> record = new ProducerRecord<>("streams-text-input-v2", new Key(key),
                 new Phrase(content));
 
@@ -68,6 +67,7 @@ public class RecordProducerApp {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
+            throw e;
         }
     }
 
